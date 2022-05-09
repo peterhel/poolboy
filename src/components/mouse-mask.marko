@@ -1,22 +1,88 @@
-<for|i| from=1 to=2>
-  <div
-    class=[input.class, i === 1 ? "mouse-mask-base" : "mouse-mask"] 
-    style=`--mouse-x:${state.x}px;--mouse-y:${state.y}px;` 
-    on-mousemove("move")>
-    <${input.renderBody}/>
-  </div>
-</for>
-
 class {
   onCreate() {
-    this.state = { x: 0, y: 0 };
+    // if(localStorage) {
+    //   let _state = localStorage.getItem('state')
+    // if(_state)
+    //   this.state = JSON.parse(_state);
+    // }
+    // else
+      this.state = {
+        dosageWeight: 0.5, 
+        dosageVolume: 50000,
+        dosagePh: .2,
+        poolVolume: 10000,
+        poolPh: 6.4,
+        refPh: 7.4
+      }
   }
-  move(e) {
-    this.state.x = e.clientX;
-    this.state.y = e.clientY;
+
+  set(prop, event) {
+    console.log(prop, event.target.value)
+    this.state[prop] = parseFloat(event.target.value)
+
+    localStorage.setItem('state', JSON.stringify(this.state))
+  }
+
+  get errPh() {
+    return this.state.refPh - this.state.poolPh;
+  }
+
+  calculate() {
+    let x = ((this.state.poolVolume / this.state.dosageVolume) * this.state.dosageWeight)*(Math.abs(this.errPh)) / this.state.dosagePh
+    return Math.round(x*20)/20
   }
 }
 
+
+<div class="_primary" style="padding:0 24px 24px 24px">
+
+  <h1>pH</h1>
+
+  <fieldset>
+    <legend>Din pool</legend>  
+    <div class="row">
+      <div class="col m6">
+        <label for="poolPh">Nuvarande pH</label>
+        <input id="poolPh" class="_full-width" on-change('set', 'poolPh') placeholder="6.2" value=state.poolPh/>
+      </div>
+      <div class="col m6">
+        <label for="poolVolume">Poolens storlek (liter)</label>
+        <input id="poolVolume" class="_full-width" on-change('set', 'poolVolume') value=state.poolVolume placeholder="10000"/>
+      </div>
+    </div>
+
+  </fieldset>
+</div>
+
+<div class="_secondary" style="padding:24px">
+
+<fieldset>
+  <legend>
+    Dosering poolkem
+  </legend>
+
+  <div class="row">
+    
+<div class="col">
+  <input class="" on-change('set', 'dosageWeight') value=state.dosageWeight placeholder="0.5"/>&nbsp;kg&nbsp;per
+</div>
+<div class="col">
+  <input placeholder="500000" value=state.dosageVolume /> liter för <input value=state.dosagePh placeholder="0.2"/> pH 
+</div>
+
+
+<p>
+  <if(component.errPh > 0)>
+    Häll i ${component.calculate()} kg "pH Plus" För att höja till pH ${state.refPh}<br/>
+  </if>
+  <else>
+    Häll i ${component.calculate()} kg "ph Minus" För att sänka till pH ${state.refPh}<br/>
+  </else>
+</p>
+</div>
+
+</fieldset>
+</div>
 style {
   .mouse-mask,
   .mouse-mask-base {
